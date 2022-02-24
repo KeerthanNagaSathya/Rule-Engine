@@ -8,7 +8,7 @@ from pyspark.sql.functions import *
 import datetime
 
 
-def rule_generator(spark, in_process, in_key, in_rule_id, in_lookup):
+def rule_generator(spark, in_process, in_key, in_rule_id, in_lookup, table_name):
 
     logging.basicConfig(level="INFO")
     logging.info("Rule generator has been called")
@@ -30,11 +30,11 @@ def rule_generator(spark, in_process, in_key, in_rule_id, in_lookup):
     atm.createOrReplaceTempView("atm_transactions")
 
     # Pass the parent and child json dataframes to the rules_pipeline function to return the query
-    rule_vars_list = initialize_variables("atm_transactions")
+    rule_vars_list = initialize_variables(table_name)
     valid_params, rule_validity, process_message, total_query = rules_pipeline(pdf_collect, cdf_collect, in_process,
                                                                                in_key,
                                                                                in_rule_id, in_lookup,
-                                                                               "atm_transactions",
+                                                                               table_name,
                                                                                rule_vars_list)
 
     return valid_params, rule_validity, process_message, total_query

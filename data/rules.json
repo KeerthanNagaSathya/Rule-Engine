@@ -38,7 +38,7 @@
     "is_valid": "true",
     "valid_from": "10/12/2021",
     "valid_till": "10/12/2999",
-    "process": "filteration",
+    "process": "filtration",
     "key": "query_lookup",
     "is_lookup": "true",
     "when":
@@ -58,7 +58,7 @@
     "is_valid": "true",
     "valid_from": "10/12/2021",
     "valid_till": "10/12/2999",
-    "process": "filteration",
+    "process": "filtration",
     "key": "query_lookup",
     "is_lookup": "true",
     "when":
@@ -78,7 +78,7 @@
     "is_valid": "true",
     "valid_from": "10/12/2021",
     "valid_till": "10/12/2999",
-    "process": "filteration",
+    "process": "filtration",
     "key": "groupby_lookup",
     "is_lookup": "true",
     "when":

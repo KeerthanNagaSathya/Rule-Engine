@@ -1,2 +1,2 @@
-[{"check_cash_amount":"yes"},{"daylight_saving":"true"}]
+where amount >= 10000
 

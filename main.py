@@ -22,11 +22,12 @@ if __name__ == '__main__':
 
     logging.info("Call the rule generator")
 
-    process = "identification"
-    key = "value_lookup"
-    rule_id = "filter_3"
+    process = "filtration"
+    key = "query_lookup"
+    rule_id = "filter_2"
     lookup = "true"
-    valid_parameters, valid_rule_gen, message, query = r.rule_generator(spark, process, key, rule_id, lookup)
+    table_name = ""
+    valid_parameters, valid_rule_gen, message, query = r.rule_generator(spark, process, key, rule_id, lookup, table_name)
 
     if valid_parameters:
         if valid_rule_gen:
