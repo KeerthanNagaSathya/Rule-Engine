@@ -13,13 +13,13 @@
     "when":
     [
           {
-            "field_name": "amount",
+            "field_name": "cash_transaction_amount",
             "operator": ">=",
             "field_value": 10000,
             "join": "AND"
           },
           {
-            "field_name": "cash_transaction",
+            "field_name": "check_cash_transaction",
             "operator": "=",
             "field_value": "true",
             "join": ""
@@ -29,6 +29,28 @@
         {
           "field_name": "is_ttr",
           "field_value": "true"
+        }
+  },
+  {
+    "id":"rule_2",
+    "name":"ATM_TTR",
+    "description": "ATM TTR Identification",
+    "is_valid": "true",
+    "valid_from": "10/12/2021",
+    "valid_till": "10/12/2999",
+    "process": "identification",
+    "key": "value_lookup",
+    "is_lookup": "true",
+    "when":
+    [
+      {
+        "lookup_value": "yes"
+      }
+    ],
+    "then":
+        {
+          "field_name": "",
+          "field_value": ""
         }
   }
   ]

@@ -1,2 +1,2 @@
-where amount >= 10000
+
 

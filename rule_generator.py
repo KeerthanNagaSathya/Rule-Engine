@@ -41,7 +41,7 @@ def rule_generator(spark, in_process, in_key, in_rule_id, in_lookup, table_name)
 
 
 def ingest_config(spark):
-    json_df = spark.read.option("multiline", "true").json("data/rules.json")
+    json_df = spark.read.option("multiline", "true").json("data/atm_rules.json")
     logging.info("reading test json from file")
     # logging.info(json_df.printSchema())
     return json_df
@@ -156,7 +156,10 @@ def rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_na
                             logging.info("Checking the lookup list as it is a lookup rule".format(p_id))
                             c_id = j["id"].strip()
                             if c_id == in_rule_id.strip():
-                                c_lookup_value = j["lookup_value"].strip()
+                                if p_key == "value_lookup":
+                                    c_lookup_value = j["lookup_value"]
+                                else:
+                                    c_lookup_value = j["lookup_value"].strip()
                                 lookup_query = c_lookup_value
                                 logging.info("lookup query/lookup value > {}".format(lookup_query))
                                 rule_validity = True

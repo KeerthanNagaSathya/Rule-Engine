@@ -22,17 +22,17 @@ if __name__ == '__main__':
 
     logging.info("Call the rule generator")
 
-    process = "filtration"
-    key = "query_lookup"
-    rule_id = "filter_2"
-    lookup = "true"
+    process = "identification"
+    key = "query_builder"
+    rule_id = "rule_1"
+    lookup = "false"
     table_name = ""
     valid_parameters, valid_rule_gen, message, query = r.rule_generator(spark, process, key, rule_id, lookup, table_name)
 
     if valid_parameters:
         if valid_rule_gen:
             with open("output/queries.txt", "w") as f:
-                f.write(query)
+                # f.write(query)
                 f.write("\n\n")
 
             # tempDf = spark.sql(query)
