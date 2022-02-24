@@ -8,14 +8,46 @@ from pyspark.sql.functions import *
 import datetime
 
 
-def ingest_config():
-    json_df = spark.read.option("multiline", "true").json("data/atm_rules.json")
+def rule_generator(spark, in_process, in_key, in_rule_id, in_lookup):
+
+    logging.basicConfig(level="INFO")
+    logging.info("Rule generator has been called")
+
+    json_df = ingest_config(spark)
+    # logging.info(json_df.show(truncate=False))
+
+    # collecting the dataframe back to the driver to pass it as a list for forming the query
+    pdf, cdf = parse_json(json_df)
+    # Show the schema of parent and child dataframe on console
+    # logging.info(pdf.printSchema())
+    # logging.info(cdf.printSchema())
+
+    pdf_collect = pdf.collect()
+    cdf_collect = cdf.collect()
+
+    # Reading the source atm file and loading into a dataframe
+    atm = ingest_atm_file(spark)
+    atm.createOrReplaceTempView("atm_transactions")
+
+    # Pass the parent and child json dataframes to the rules_pipeline function to return the query
+    rule_vars_list = initialize_variables("atm_transactions")
+    valid_params, rule_validity, process_message, total_query = rules_pipeline(pdf_collect, cdf_collect, in_process,
+                                                                               in_key,
+                                                                               in_rule_id, in_lookup,
+                                                                               "atm_transactions",
+                                                                               rule_vars_list)
+
+    return valid_params, rule_validity, process_message, total_query
+
+
+def ingest_config(spark):
+    json_df = spark.read.option("multiline", "true").json("data/rules.json")
     logging.info("reading test json from file")
     # logging.info(json_df.printSchema())
     return json_df
 
 
-def ingest_atm_file():
+def ingest_atm_file(spark):
     # Reading the source atm file and loading into a dataframe
     atm_df = spark.read.option("Header", "true").option("InferSchema", "true").csv("data/atm.csv")
     logging.info("Reading atm transactions csv file")
@@ -34,7 +66,8 @@ def parse_json(json_df):
                                       explode("then").alias("then")) \
         .select("id", "name", "description", "is_valid", "valid_from", "valid_till", "key", "is_lookup", "then.*")
     '''
-    parentDf = rulesExplodedDf.select("id", "name", "description", "is_valid", "valid_from", "valid_till", "process", "key",
+    parentDf = rulesExplodedDf.select("id", "name", "description", "is_valid", "valid_from", "valid_till", "process",
+                                      "key",
                                       "is_lookup", "then.*")
     logging.info(parentDf.printSchema())
     logging.info(parentDf.show(truncate=False))
@@ -67,7 +100,6 @@ def initialize_variables(table_name):
 
 
 def rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_name, rule_vars_list):
-
     rule_validity = rule_vars_list[0]
     check_rule = rule_vars_list[1]
     valid_params = rule_vars_list[2]
@@ -103,9 +135,9 @@ def rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_na
         p_key = i["key"].strip()
         p_is_lookup = i["is_lookup"].strip()
 
-        logging.debug("p_key <{}>".format(p_key))
-        logging.debug("p_id <{}>".format(p_id))
-        logging.debug("p_is_lookup <{}>".format(p_is_lookup))
+        logging.info("p_key <{}>".format(p_key))
+        logging.info("p_id <{}>".format(p_id))
+        logging.info("p_is_lookup <{}>".format(p_is_lookup))
 
         if p_process == in_process.strip() and p_key == in_key.strip() and p_id == in_rule_id.strip() and p_is_lookup == in_lookup.strip() or goto_rule_check:
 
@@ -120,13 +152,13 @@ def rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_na
                     for j in cdf:  # Looping through the child dataframe created from the json file.
                         logging.info("\n\n******** Looping through the Child dataFrame  **********")
 
-                        if p_key == "query_lookup" or p_key == "value_lookup" or p_key == "value_lookup" or p_is_lookup == "true":
+                        if p_key == "query_lookup" or p_key == "value_lookup" or p_key == "groupby_lookup" or p_is_lookup == "true":
                             logging.info("Checking the lookup list as it is a lookup rule".format(p_id))
                             c_id = j["id"].strip()
                             if c_id == in_rule_id.strip():
                                 c_lookup_value = j["lookup_value"].strip()
                                 lookup_query = c_lookup_value
-                                logging.info("lookup query > {}".format(lookup_query))
+                                logging.info("lookup query/lookup value > {}".format(lookup_query))
                                 rule_validity = True
                         else:
                             c_id = j["id"]
@@ -226,11 +258,22 @@ def rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_na
         if rule_validity:
             logging.info("Lookup check from in_lookup > {}".format(in_lookup))
             if in_lookup.strip() == "true":
-                logging.info("It is a lookup query > {}".format(lookup_query))
-                total_query = select_query + lookup_query
-                logging.info("total_query > {}".format(total_query))
-                process_message = "Successfully returning the lookup query"
-                return valid_params, rule_validity, process_message, total_query
+                if in_key.strip() == "value_lookup":
+                    logging.info("It is a lookup value > {}".format(lookup_query))
+                    lookup_value = lookup_query
+                    logging.info("lookup_value > {}".format(lookup_value))
+                    process_message = "Successfully returning the lookup value"
+                    return valid_params, rule_validity, process_message, lookup_value
+                else:
+                    logging.info("It is a lookup query > {}".format(lookup_query))
+                    if not (table_name and table_name.strip()) != "":
+                        total_query = lookup_query
+                        logging.info("table name is empty, total query is > {}".format(total_query))
+                    else:
+                        total_query = select_query + lookup_query
+                        logging.info("table name is given, total query is > {}".format(total_query))
+                    process_message = "Successfully returning the lookup query"
+                    return valid_params, rule_validity, process_message, total_query
             else:
                 logging.info("It is a query builder > {}".format(total_query))
                 logging.info("Rule {} is success and the field name is {} ".format(p_id, p_field_name))
@@ -244,10 +287,17 @@ def rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_na
                                              check_rule_id,
                                              where_query, select_query,
                                              total_query, lookup_query, goto_rule_check]
-                    rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_name, updated_rule_gen_vars)
+                    rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_name,
+                                   updated_rule_gen_vars)
                 else:
                     where_query = where_query + " order by id "
-                    total_query = select_query + where_query
+                    if not (table_name and table_name.strip()) != "":
+                        total_query = where_query
+                        logging.info("table name is empty, total query is > {}".format(total_query))
+                    else:
+                        total_query = select_query + where_query
+                        logging.info("table name is given, total query is > {}".format(total_query))
+
                     process_message = "Successfully returning the dynamically generated query"
                     logging.info("\n\n COMPLETED LOOPING and outcome is <" + process_message + ">")
                     logging.info("total_query > {}".format(total_query))
@@ -260,66 +310,3 @@ def rules_pipeline(pdf, cdf, in_process, in_key, in_rule_id, in_lookup, table_na
         logging.info("Rules are not configured for the combination of parameters passed.")
         process_message = "Rules are not configured for the combination of parameters passed."
         return valid_params, rule_validity, process_message, ""
-
-
-def rule_generator(in_process, in_key, in_rule_id, in_lookup):
-    logging.info("Rule generator has been called")
-
-    json_df = ingest_config()
-    # logging.info(json_df.show(truncate=False))
-
-    # collecting the dataframe back to the driver to pass it as a list for forming the query
-    pdf, cdf = parse_json(json_df)
-    # Show the schema of parent and child dataframe on console
-    # logging.info(pdf.printSchema())
-    # logging.info(cdf.printSchema())
-
-    pdf_collect = pdf.collect()
-    cdf_collect = cdf.collect()
-
-    # Reading the source atm file and loading into a dataframe
-    atm = ingest_atm_file()
-    atm.createOrReplaceTempView("atm_transactions")
-
-    # Pass the parent and child json dataframes to the rules_pipeline function to return the query
-    rule_vars_list = initialize_variables("atm_transactions")
-    valid_params, rule_validity, process_message, total_query = rules_pipeline(pdf_collect, cdf_collect, in_process, in_key,
-                                                                              in_rule_id, in_lookup, "atm_transactions",
-                                                                              rule_vars_list)
-
-    return valid_params, rule_validity, process_message, total_query
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level="INFO")
-
-    spark = SparkSession \
-        .builder \
-        .appName("Rules Engine") \
-        .master("local[*]") \
-        .enableHiveSupport() \
-        .getOrCreate()
-
-    logging.info("spark session created")
-
-    logging.info("Call the rule generator")
-
-    process = "identification"
-    key = "query_builder"
-    rule_id = "rule_1"
-    lookup = "false"
-    valid_parameters, valid_rule_gen, message, query = rule_generator(process, key, rule_id, lookup)
-
-    if valid_parameters:
-        if valid_rule_gen:
-            with open("output/queries.txt", "w") as f:
-                f.write(query)
-                f.write("\n\n")
-
-            tempDf = spark.sql(query)
-            logging.info(tempDf.show(truncate=False))
-            # tempDf.repartition(1).write.option("header", "true").csv("output/Dataframe")
-        else:
-            logging.info(message)
-    else:
-        logging.info(message)

@@ -1,2 +1,2 @@
- select * from atm_transactions  where amount >= 10000  AND cash_transaction = 'true' order by id 
+[{"check_cash_amount":"yes"},{"daylight_saving":"true"}]
 
