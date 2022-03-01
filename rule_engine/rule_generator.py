@@ -14,9 +14,11 @@ import json
 
 
 def rule_generator(spark, in_process, in_process_key, in_rule_id, in_lookup, in_value_key, in_table_name,
-                   in_dataframes):
+                   in_dataframes, in_apply_query):
     logging.basicConfig(level="INFO")
     logging.info("Rule generator has been called")
+
+    output_df = None
 
     json_df = ingest_config(spark)
     # logging.info(json_df.show(truncate=False))
@@ -38,7 +40,13 @@ def rule_generator(spark, in_process, in_process_key, in_rule_id, in_lookup, in_
                                                                                in_table_name,
                                                                                rule_vars_list)
 
-    return valid_params, rule_validity, process_message, total_query
+    if in_apply_query and (in_table_name and in_table_name.strip() != ""):
+        logging.info("User has asked to apply query <{}> on table_name <{}>".format(in_apply_query, in_table_name))
+        output_df = spark.sql(total_query)
+        # logging.info(output_df.show(truncate=False))
+
+
+    return valid_params, rule_validity, process_message, total_query, output_df
 
 
 def ingest_config(spark):
@@ -230,7 +238,7 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                                     logging.info("check_rule is true, checking where query for appending <{}>".format(
                                         where_query[-3:].lower()))
 
-                                    if where_query[-3:].lower() != "and":
+                                    if where_query[-3:].lower() != "and" and where_query[-6:].lower() != " where":
                                         where_query = where_query + " and"
                                         logging.info("where_query > {}".format(where_query))
 

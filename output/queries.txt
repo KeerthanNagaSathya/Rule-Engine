@@ -1,2 +1,2 @@
- select * from atm_transactions  where and transaction_total_amount >= 10000  AND
+ select * from atm_filtered  where transaction_total_amount >= 10000
 

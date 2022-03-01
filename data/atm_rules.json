@@ -60,7 +60,7 @@
             "field_name": "transaction_total_amount",
             "operator": ">=",
             "field_value": "10000",
-            "join": "AND"
+            "join": ""
           }
     ],
     "then":

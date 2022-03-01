@@ -8,11 +8,12 @@ from pyspark.sql.functions import *
 from datetime import date, datetime
 import json
 
-
 def rule_generator(spark, in_process, in_process_key, in_rule_id, in_lookup, in_value_key, in_table_name,
-                   in_dataframes):
+                   in_dataframes, in_apply_query):
     logging.basicConfig(level="INFO")
     logging.info("Rule generator has been called")
+
+    output_df = None
 
     json_df = ingest_config(spark)
     # logging.info(json_df.show(truncate=False))
@@ -34,7 +35,13 @@ def rule_generator(spark, in_process, in_process_key, in_rule_id, in_lookup, in_
                                                                                in_table_name,
                                                                                rule_vars_list)
 
-    return valid_params, rule_validity, process_message, total_query
+    if in_apply_query and (in_table_name and in_table_name.strip() != ""):
+        logging.info("User has asked to apply query <{}> on table_name <{}>".format(in_apply_query, in_table_name))
+        output_df = spark.sql(total_query)
+        # logging.info(output_df.show(truncate=False))
+
+
+    return valid_params, rule_validity, process_message, total_query, output_df
 
 
 def ingest_config(spark):
@@ -226,7 +233,7 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                                     logging.info("check_rule is true, checking where query for appending <{}>".format(
                                         where_query[-3:].lower()))
 
-                                    if where_query[-3:].lower() != "and":
+                                    if where_query[-3:].lower() != "and" and where_query[-6:].lower() != " where":
                                         where_query = where_query + " and"
                                         logging.info("where_query > {}".format(where_query))
 
@@ -300,7 +307,7 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                             logging.info(
                                 "After looping is completed, the where query returned is > {}".format(where_query))
                         break
-                        # rule_validity = True  @@
+                            # rule_validity = True  @@
                     else:
                         logging.info("!!!! WARNING : Could not find a matching child record in json.")
 
@@ -322,6 +329,7 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                 rule_validity = False
                 process_message = "Rule {} is not valid and is skipped".format(p_id)
                 return valid_params, rule_validity, process_message, ""
+
 
     # Checking the validity of the rule after one parent and all its corresponding child records are processed.
 
@@ -431,12 +439,9 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                     in_process_key = "query_builder"
                     in_rule_id = check_rule_id
                     rule_validity = False
-                    valid_params, rule_validity, process_message, total_query = rules_pipeline(pdf, cdf, in_process,
-                                                                                               in_process_key,
-                                                                                               in_rule_id, in_lookup,
-                                                                                               in_value_key,
-                                                                                               in_table_name,
-                                                                                               updated_rule_gen_vars)
+                    valid_params, rule_validity, process_message, total_query = rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, in_value_key,
+                                   in_table_name,
+                                   updated_rule_gen_vars)
 
                 else:
 
@@ -510,6 +515,7 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
         process_message = "Rules are not configured for the combination of parameters passed."
         return valid_params, rule_validity, process_message, ""
 
+
 def ingest_atm_file():
     # Reading the source atm file and loading into a dataframe
     atm_df = spark.read.option("Header", "true").option("InferSchema", "true").csv("data/atm.csv")
@@ -533,6 +539,52 @@ if __name__ == '__main__':
 
     logging.info("Call the rule generator")
 
+    process = "filtration"
+    process_key = "query_lookup"
+    rule_id = "rule_1"
+    lookup = "true"
+    value_key = ""
+    table_name = "atm_transactions"
+    dataframes = [atm]
+    apply_query = True
+    valid_parameters, valid_rule_gen, message, query, output_df = rule_generator(spark, process, process_key, rule_id,
+                                                                                 lookup,
+                                                                                 value_key, table_name, dataframes,
+                                                                                 apply_query)
+
+    logging.info("\n\n\n *************** MAIN -> FILTRATION *********************")
+    logging.info("valid_parameters > {}".format(valid_parameters))
+    logging.info("valid_rule_gen   > {}".format(valid_rule_gen))
+    logging.info("message          > {}".format(message))
+    logging.info("query            > {}".format(query))
+
+    if valid_parameters:
+        if valid_rule_gen:
+            logging.info("\n\n Valid Parameters and Valid rule gen, output is > {}".format(query))
+            with open("output/queries.txt", "w") as f:
+                f.write(str(query))
+                f.write("\n\n")
+
+            if apply_query:
+                logging.info(output_df.show(truncate=False))
+                output_df.createOrReplaceTempView("atm_filtered")
+
+            '''
+            tempDf = spark.sql(query)
+            logging.info(tempDf.show(truncate=False))
+            tempDf.createOrReplaceTempView("atm_filtered")
+
+            tempDf.repartition(1).write.option("header", "true").csv("output/Dataframe")
+            '''
+        else:
+            logging.info(message)
+    else:
+        logging.info(message)
+
+
+
+
+
     # Setting the parameters for filtration and calling the rule engine function to get the lookup query.
 
     process = "identification"
@@ -540,10 +592,13 @@ if __name__ == '__main__':
     rule_id = "rule_5"
     lookup = "true"
     value_key = ""
-    table_name = "atm_transactions"
+    table_name = "atm_filtered"
     dataframes = [atm]
-    valid_parameters, valid_rule_gen, message, query = rule_generator(spark, process, process_key, rule_id, lookup,
-                                                                      value_key, table_name, dataframes)
+    apply_query = True
+    valid_parameters, valid_rule_gen, message, query, output_df = rule_generator(spark, process, process_key, rule_id,
+                                                                                 lookup,
+                                                                                 value_key, table_name, dataframes,
+                                                                                 apply_query)
 
     logging.info("\n\n\n *************** MAIN -> conditional *********************")
     logging.info("valid_parameters > {}".format(valid_parameters))
@@ -553,16 +608,21 @@ if __name__ == '__main__':
 
     if valid_parameters:
         if valid_rule_gen:
-            logging.info("valid_parameters and valid rule gen, output is >".format(query))
+            logging.info("\n\n Valid Parameters and Valid rule gen, output is > {}".format(query))
             with open("output/queries.txt", "w") as f:
                 f.write(str(query))
                 f.write("\n\n")
 
-            # tempDf = spark.sql(query)
-            # logging.info(tempDf.show(truncate=False))
-            # tempDf.createOrReplaceTempView("atm_filtered")
+            if apply_query:
+                logging.info(output_df.show(truncate=False))
 
-            # tempDf.repartition(1).write.option("header", "true").csv("output/Dataframe")
+            '''
+            tempDf = spark.sql(query)
+            logging.info(tempDf.show(truncate=False))
+            tempDf.createOrReplaceTempView("atm_filtered")
+
+            tempDf.repartition(1).write.option("header", "true").csv("output/Dataframe")
+            '''
         else:
             logging.info(message)
     else:
