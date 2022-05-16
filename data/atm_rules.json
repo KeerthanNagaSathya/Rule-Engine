@@ -35,7 +35,7 @@
     "when":
     [
       {
-        "lookup_value": {"check_cheque_transaction": "yes", "bank" :  "westpac"}
+        "lookup_value": {"check_cheque_transaction": "yes", "flag" :  "pass"}
       }
     ],
     "then":
@@ -50,7 +50,7 @@
     "description": "ATM TTR Identification",
     "is_valid": "true",
     "valid_from": "10/12/2021",
-    "valid_till": "10/03/2022",
+    "valid_till": "10/06/2022",
     "process": "identification",
     "process_key": "query_builder",
     "is_lookup": "false",
@@ -75,16 +75,16 @@
     "description": "ATM TTR Identification",
     "is_valid": "true",
     "valid_from": "10/12/2021",
-    "valid_till": "10/03/2022",
+    "valid_till": "10/06/2022",
     "process": "identification",
-    "process_key": "transformation",
+    "process_key": "query_builder",
     "is_lookup": "false",
     "when":
     [
           {
-            "field_name": "transaction_total_amount",
-            "operator": "withColumn",
-            "field_value": "col(transaction_total_amount) - col(cheque_amount)",
+            "field_name": "transaction_total_amount - cheque_amount",
+            "operator": ">=",
+            "field_value": "10000",
             "join": ""
           }
     ],
@@ -100,21 +100,20 @@
     "description": "ATM TTR Identification",
     "is_valid": "true",
     "valid_from": "10/12/2021",
-    "valid_till": "10/03/2022",
+    "valid_till": "10/06/2022",
     "process": "identification",
     "process_key": "conditional",
     "is_lookup": "true",
     "when":
     [
           {
-            "lookup_value": {"check_cheque_transaction": "yes"}
+            "lookup_value": {"check_cheque_transaction": "no"}
           }
     ],
     "then":
         {
           "field_name": "goto",
-          "field_value": "rule_3",
-          "goto_process_key": "transformation"
+          "field_value": "rule_4"
         }
   }
   ]

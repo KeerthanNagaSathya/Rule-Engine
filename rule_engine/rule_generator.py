@@ -40,13 +40,10 @@ def rule_generator(spark, in_process, in_process_key, in_rule_id, in_lookup, in_
                                                                                in_table_name,
                                                                                rule_vars_list)
 
-    if in_apply_query and (in_table_name and in_table_name.strip() != ""):
+    if in_apply_query and (in_table_name and in_table_name.strip() != "") and rule_validity:
         logging.info("User has asked to apply query <{}> on table_name <{}>".format(in_apply_query, in_table_name))
         output_df = spark.sql(total_query)
         # logging.info(output_df.show(truncate=False))
-
-    austrac_df = output_df.withColumn("austrac_amount", col("transaction_total_amount") - col("cheque_amount"))
-    logging.info(austrac_df.show(truncate=False))
 
     return valid_params, rule_validity, process_message, total_query, output_df
 
@@ -437,7 +434,7 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                                              total_query, lookup_query, goto_rule_check]
 
                     in_lookup = ""
-                    in_process_key = i["goto_process_key"]
+                    in_process_key = "query_builder"  # @@ This is hardcoded to query builder, it can be anything. Need to make it dynamic
                     in_rule_id = check_rule_id
                     rule_validity = False
                     valid_params, rule_validity, process_message, total_query = rules_pipeline(pdf, cdf, in_process,
