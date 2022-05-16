@@ -45,6 +45,8 @@ def rule_generator(spark, in_process, in_process_key, in_rule_id, in_lookup, in_
         output_df = spark.sql(total_query)
         # logging.info(output_df.show(truncate=False))
 
+    austrac_df = output_df.withColumn("austrac_amount", col("transaction_total_amount") - col("cheque_amount"))
+    logging.info(austrac_df.show(truncate=False))
 
     return valid_params, rule_validity, process_message, total_query, output_df
 
@@ -187,20 +189,6 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
 
                         c_id = j["id"]
 
-                        # If a part of query is generated, then assigning the rule id that is setup in goto section of the previous rule else looping.
-                        '''
-                        if check_rule:
-                            validate_rule_id = check_rule_id
-                            logging.info(
-                                "check_rule is true, A/Multiple rule/rules have already run and current rule_id is <{}>".format(
-                                    validate_rule_id))
-                        else:
-                            validate_rule_id = p_id
-                            logging.info(
-                                "check_rule is false therefore no complete rule is yet finished, Checking rule_id <{}>".format(
-                                    validate_rule_id))
-                        '''
-
                         # Fetching the child dataframe details by mapping the corresponding parent rule_id.
 
                         if c_id == p_id:
@@ -228,7 +216,7 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                                     logging.info("lookup query/lookup value > {}".format(lookup_query))
                                     rule_validity = True
                                     break
-                            else:
+                            elif p_process_key == "query_builder":
 
                                 # If a part of query is generated, then assigning the rule id that is setup in goto section of the previous rule else looping.
 
@@ -296,6 +284,15 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                                                                                                  c_join)
                                         logging.info("query > {}".format(where_query))
 
+                            elif p_process_key == "transformation":
+
+                                logging.info("Process key is transformation")
+                                """ df.withColumn("transaction_total_amount", col("transaction_total_amount") - col("cheque_amount"))"""
+                                # transform_string = """{}.{}({}, "{}" - "{}")""".format(output_df, c_operator, c_name)
+
+                            else:
+                                process_message = "Invalid Process key."
+                                logging.info(process_message)
 
                         else:
                             logging.info("NO MATCH Found for PID <{}> and CID <{}>".format(validate_rule_id, c_id))
@@ -312,7 +309,7 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                             logging.info(
                                 "After looping is completed, the where query returned is > {}".format(where_query))
                         break
-                            # rule_validity = True  @@
+                        # rule_validity = True  @@
                     else:
                         logging.info("!!!! WARNING : Could not find a matching child record in json.")
 
@@ -334,7 +331,6 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                 rule_validity = False
                 process_message = "Rule {} is not valid and is skipped".format(p_id)
                 return valid_params, rule_validity, process_message, ""
-
 
     # Checking the validity of the rule after one parent and all its corresponding child records are processed.
 
@@ -441,12 +437,15 @@ def rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, 
                                              total_query, lookup_query, goto_rule_check]
 
                     in_lookup = ""
-                    in_process_key = "query_builder"
+                    in_process_key = i["goto_process_key"]
                     in_rule_id = check_rule_id
                     rule_validity = False
-                    valid_params, rule_validity, process_message, total_query = rules_pipeline(pdf, cdf, in_process, in_process_key, in_rule_id, in_lookup, in_value_key,
-                                   in_table_name,
-                                   updated_rule_gen_vars)
+                    valid_params, rule_validity, process_message, total_query = rules_pipeline(pdf, cdf, in_process,
+                                                                                               in_process_key,
+                                                                                               in_rule_id, in_lookup,
+                                                                                               in_value_key,
+                                                                                               in_table_name,
+                                                                                               updated_rule_gen_vars)
 
                 else:
 

@@ -33,10 +33,10 @@ if __name__ == '__main__':
 
     logging.info("Call the rule generator")
 
-    process = "filtration"
-    process_key = "query_lookup"
-    rule_id = "rule_1"
-    lookup = "true"
+    process = "identification"
+    process_key = "query_builder"
+    rule_id = "rule_3"
+    lookup = "false"
     value_key = ""
     table_name = "atm_transactions"
     dataframes = [atm]
@@ -46,7 +46,7 @@ if __name__ == '__main__':
                                                                                  value_key, table_name, dataframes,
                                                                                  apply_query)
 
-    logging.info("\n\n\n *************** MAIN -> FILTRATION *********************")
+    logging.info("\n\n\n *************** MAIN -> IDENTIFICATION QUERY BUILDER *********************")
     logging.info("valid_parameters > {}".format(valid_parameters))
     logging.info("valid_rule_gen   > {}".format(valid_rule_gen))
     logging.info("message          > {}".format(message))

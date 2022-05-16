@@ -77,14 +77,14 @@
     "valid_from": "10/12/2021",
     "valid_till": "10/03/2022",
     "process": "identification",
-    "process_key": "query_builder",
+    "process_key": "transformation",
     "is_lookup": "false",
     "when":
     [
           {
-            "field_name": "transaction_total_amount - cheque_amount",
-            "operator": ">=",
-            "field_value": "10000",
+            "field_name": "transaction_total_amount",
+            "operator": "withColumn",
+            "field_value": "col(transaction_total_amount) - col(cheque_amount)",
             "join": ""
           }
     ],
@@ -113,7 +113,8 @@
     "then":
         {
           "field_name": "goto",
-          "field_value": "rule_3"
+          "field_value": "rule_3",
+          "goto_process_key": "transformation"
         }
   }
   ]
