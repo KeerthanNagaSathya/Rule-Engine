@@ -99,6 +99,28 @@
         "field_name": "",
         "field_value": ""
       }
+    },
+    {
+      "id": "Fee_flag",
+      "name": "BRANCH_TTR",
+      "description": "Branch TTR Identification",
+      "is_valid": "true",
+      "valid_from": "10/12/2021",
+      "valid_till": "10/12/2999",
+      "process": "identification",
+      "process_key": "value_lookup",
+      "is_lookup": "true",
+      "when": [
+        {
+          "lookup_value": {
+            "fee_flag": "no"
+          }
+        }
+      ],
+      "then": {
+        "field_name": "",
+        "field_value": ""
+      }
     }
   ]
 }

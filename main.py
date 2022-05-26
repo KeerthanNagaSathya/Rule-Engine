@@ -76,6 +76,42 @@ if __name__ == '__main__':
     else:
         logging.info(message)
 
+    # Calling the rule engine for getting the Fee Flag
+    # ---------------------------------------------------   FEE FLAG  ----------------------------------------------------
+
+    process = "identification"
+    process_key = "value_lookup"
+    rule_id = "Fee_flag"
+    lookup = "true"
+    value_key = "fee_flag"
+    table_name = ""
+    dataframes = [branch]
+    apply_query = False
+    valid_parameters, valid_rule_gen, message, query, output_df = rule_generator(spark, process, process_key,
+                                                                                 rule_id,
+                                                                                 lookup,
+                                                                                 value_key, table_name, dataframes,
+                                                                                 apply_query)
+
+    logging.info("\n\n\n *************** MAIN -> IDENTIFICATION VALUE LOOKUP *********************")
+    logging.info("valid_parameters > {}".format(valid_parameters))
+    logging.info("valid_rule_gen   > {}".format(valid_rule_gen))
+    logging.info("message          > {}".format(message))
+    logging.info("query            > {}".format(query))
+
+    if valid_parameters:
+        if valid_rule_gen:
+
+            logging.info("valid_parameters and valid rule gen, output is >".format(query))
+            with open("output/queries.txt", "a") as f:
+                f.write(str(query))
+                f.write("\n\n")
+        else:
+            logging.info(message)
+    else:
+        logging.info(message)
+
+
     # Calling the rule engine for getting Rule_1
 
     process = "identification"
@@ -92,7 +128,7 @@ if __name__ == '__main__':
                                                                                  value_key, table_name, dataframes,
                                                                                  apply_query)
 
-    logging.info("\n\n\n *************** MAIN -> FILTRATION *********************")
+    logging.info("\n\n\n *************** MAIN -> IDENTIFICATION *********************")
     logging.info("valid_parameters > {}".format(valid_parameters))
     logging.info("valid_rule_gen   > {}".format(valid_rule_gen))
     logging.info("message          > {}".format(message))

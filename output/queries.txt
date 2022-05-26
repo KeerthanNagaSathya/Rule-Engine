@@ -1,2 +1,12 @@
+ select * from branch_transactions where reversal_of = 0 and reversal_by = 0 and (transaction_code in ('Deposit', 'SellFX', 'CloseAccount', 'CreditOtherBank', 'BED Cash Held Over Verification', 'BED Completed', 'CashedCheque', 'CloseAccount', 'Withdrawal'))
+
+no
+
+ select * from branch_filtered where total_cash_tendered >= 10000 and total_cash_disbursed = 0
+
+ select * from branch_filtered where total_cash_tendered >= 10000 and total_cash_disbursed <> 0 and total_cash_tendered - total_cash_disbursed >= 10000
+
+ select * from branch_filtered where total_cash_disbursed >= 10000 and total_cash_tendered = 0
+
  select * from branch_filtered where total_cash_disbursed >= 10000 and total_cash_tendered <> 0 and total_cash_disbursed - total_cash_tendered >= 10000
 
