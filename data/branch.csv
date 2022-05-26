@@ -1,0 +1,10 @@
+dserecn,business_date,session_id,branch_id,credit_cash_amt,debit_cash_amt,total_cash_tendered,total_cash_disbursed,transaction_date,time_ej_update,transaction_code,transaction_status_code,trn_total,fee_total,fee_payment_method,reversal_of,reversal_by,fee_name,bin_type,item_id,item_value
+1,"16/01/2022",,a100,3000,0,3000,0,"16/01/2022","","Deposit",1,3000,0,cash,0,0,"","","",""
+2,"16/01/2022",,a100,10000,0,10000,0,"16/01/2022","","SellFX",1,10000,0,cash,0,0,"","","",""
+3,"16/01/2022",,a100,0,4000,0,4000,"16/01/2022","","SellFX",1,4000,0,cash,0,0,"","","",""
+4,"16/01/2022",,a100,0,20000,0,20000,"16/01/2022","","CloseAccount",1,20000,0,cash,0,0,"","","",""
+5,"16/01/2022",,a100,12000,1000,12000,1000,"16/01/2022","","CreditOtherBank",1,11000,0,cash,0,0,"","","",""
+6,"16/01/2022",,a100,1000,22000,1000,22000,"16/01/2022","","Deposit",1,21000,0,cash,0,0,"","","",""
+7,"16/01/2022",,a100,10000,1000,10000,1000,"16/01/2022","","SellFX",1,9000,0,cash,0,0,"","","",""
+8,"16/01/2022",,a100,11000,20000,11000,20000,"16/01/2022","","Deposit",1,9000,0,cash,0,0,"","","",""
+9,"16/01/2022",,a100,100,0,100,0,"16/01/2022","","Deposit",1,100,0,cash,0,0,"","","",""

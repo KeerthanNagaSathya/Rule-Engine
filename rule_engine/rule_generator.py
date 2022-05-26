@@ -49,7 +49,7 @@ def rule_generator(spark, in_process, in_process_key, in_rule_id, in_lookup, in_
 
 
 def ingest_config(spark):
-    json_df = spark.read.option("multiline", "true").json("data/atm_rules.json")
+    json_df = spark.read.option("multiline", "true").json("data/branch_rules.json")
     logging.info("reading test json from file")
     # logging.info(json_df.printSchema())
     return json_df

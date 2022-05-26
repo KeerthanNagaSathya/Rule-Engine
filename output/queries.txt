@@ -1,2 +1,2 @@
- select * from atm_filtered  where transaction_total_amount - cheque_amount >= 10000
+ select * from branch_filtered where total_cash_disbursed >= 10000 and total_cash_tendered <> 0 and total_cash_disbursed - total_cash_tendered >= 10000
 

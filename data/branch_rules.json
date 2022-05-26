@@ -1,0 +1,104 @@
+{
+  "rules": [
+    {
+      "id": "filter_1",
+      "name": "BRANCH_TTR",
+      "description": "Branch TTR Filtration",
+      "is_valid": "true",
+      "valid_from": "10/12/2021",
+      "valid_till": "10/12/2999",
+      "process": "filtration",
+      "process_key": "query_lookup",
+      "is_lookup": "true",
+      "when": [
+        {
+          "lookup_value": " where reversal_of = 0 and reversal_by = 0 and (transaction_code in ('Deposit', 'SellFX', 'CloseAccount', 'CreditOtherBank', 'BED Cash Held Over Verification', 'BED Completed', 'CashedCheque', 'CloseAccount', 'Withdrawal'))"
+        }
+      ],
+      "then": {
+        "field_name": "",
+        "field_value": ""
+      }
+    },
+    {
+      "id": "Rule_1",
+      "name": "BRANCH_TTR",
+      "description": "Branch TTR Identification",
+      "is_valid": "true",
+      "valid_from": "10/12/2021",
+      "valid_till": "10/12/2999",
+      "process": "identification",
+      "process_key": "query_lookup",
+      "is_lookup": "true",
+      "when": [
+        {
+          "lookup_value": " where total_cash_tendered >= 10000 and total_cash_disbursed = 0"
+        }
+      ],
+      "then": {
+        "field_name": "",
+        "field_value": ""
+      }
+    },
+    {
+      "id": "Rule_1_CT",
+      "name": "BRANCH_TTR",
+      "description": "Branch TTR Identification",
+      "is_valid": "true",
+      "valid_from": "10/12/2021",
+      "valid_till": "10/12/2999",
+      "process": "identification",
+      "process_key": "query_lookup",
+      "is_lookup": "true",
+      "when": [
+        {
+          "lookup_value": " where total_cash_tendered >= 10000 and total_cash_disbursed <> 0 and total_cash_tendered - total_cash_disbursed >= 10000"
+        }
+      ],
+      "then": {
+        "field_name": "",
+        "field_value": ""
+      }
+    },
+    {
+      "id": "Rule_2",
+      "name": "BRANCH_TTR",
+      "description": "Branch TTR Identification",
+      "is_valid": "true",
+      "valid_from": "10/12/2021",
+      "valid_till": "10/12/2999",
+      "process": "identification",
+      "process_key": "query_lookup",
+      "is_lookup": "true",
+      "when": [
+        {
+          "lookup_value": " where total_cash_disbursed >= 10000 and total_cash_tendered = 0"
+        }
+      ],
+      "then": {
+        "field_name": "",
+        "field_value": ""
+      }
+    },
+    {
+      "id": "Rule_2_CD",
+      "name": "BRANCH_TTR",
+      "description": "Branch TTR Identification",
+      "is_valid": "true",
+      "valid_from": "10/12/2021",
+      "valid_till": "10/12/2999",
+      "process": "identification",
+      "process_key": "query_lookup",
+      "is_lookup": "true",
+      "when": [
+        {
+          "lookup_value": " where total_cash_disbursed >= 10000 and total_cash_tendered <> 0 and total_cash_disbursed - total_cash_tendered >= 10000"
+        }
+      ],
+      "then": {
+        "field_name": "",
+        "field_value": ""
+      }
+    }
+  ]
+}
